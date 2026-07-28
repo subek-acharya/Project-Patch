@@ -3,6 +3,14 @@ checkpoints/*
 !checkpoints/.gitkeep
 *.pth
 
+checkpoints_adv/*
+!checkpoints_adv/.gitkeep
+*.pth
+
+checkpoints_clean/*
+!checkpoints_clean/.gitkeep
+*.pth
+
 # Datasets (very large)
 datasets/*
 !datasets/.gitkeep

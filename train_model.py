@@ -3,6 +3,7 @@ import random
 import numpy as np
 from tqdm import tqdm
 import torch.optim as optim
+import wandb # to use with weightandbiases api
 
 from patchguard import PatchGuard
 from utils import get_dataloader, save_model, log_loss, patchify, label_patch
@@ -80,8 +81,17 @@ def train(model, anomaly_generator, train_loader, optimizer, lr_scheduler, crite
         total_loss = train_step(model, anomaly_generator, train_loader, optimizer, criterion, use_reg, device, args)
         lr_scheduler.step()
 
+        current_lr = optimizer.param_groups[0]['lr']  # ← ADD THIS LINE
+
         epoch_iterator.set_postfix(loss=total_loss)
         log_loss(epoch, total_loss)
+
+        # ─── Log to wandb ───
+        wandb.log({
+            "epoch": epoch,
+            "train_loss": total_loss,
+            "learning_rate": current_lr,
+        })
 
         if (epoch % 20 == 0) and (epoch > int(epochs / 2)):
             save_model(model, ckpt_path + f"/patchguard_epoch_{epoch}.pth")
@@ -90,12 +100,38 @@ def train(model, anomaly_generator, train_loader, optimizer, lr_scheduler, crite
 def run_train(args):
     set_seed(args.seed)
 
+    # ─── Initialize wandb ───
+    adv_tag = "adversarial" if args.adv_train else "clean"
+    wandb.init(
+        project="PatchGuard-MVTec",
+        name=f"{args.dataset}_{args.class_name}_{adv_tag}",
+        config={
+            "dataset": args.dataset,
+            "class_name": args.class_name,
+            "epochs": args.epochs,
+            "lr": args.lr,
+            "batch_size": args.train_batch_size,
+            "adv_train": args.adv_train,
+            "epsilon_train": args.epsilon_train,
+            "step_train": args.step_train,
+            "use_reg": args.use_reg,
+            "reg_type": args.reg_type,
+            "backbone": args.hf_path,
+            "image_size": args.image_size,
+        },
+        tags=[args.dataset, args.class_name, adv_tag],
+    )
+
     ckpt_path = os.path.join(args.checkpoint_dir, f"checkpoints_{args.dataset}_{args.class_name}_pgd{args.step_train}")
     os.makedirs(ckpt_path, exist_ok=True)
 
 
     device = torch.device("cuda" if args.device != "cpu" and torch.cuda.is_available() else "cpu")
     model = PatchGuard(args, device).to(device)
+
+    # ─── Log model info to wandb ───
+    total_params = sum(p.numel() for p in model.parameters())
+    wandb.log({"total_parameters": total_params})
 
     train_loader, _ = get_dataloader(args.image_size, args.dataset_dir, args.dataset, args.class_name, args.train_batch_size, args.test_batch_size, args.num_workers, args.seed)
     
@@ -109,3 +145,6 @@ def run_train(args):
     train(model, anomaly_generator, train_loader, optimizer, lr_scheduler, criterion, args.use_reg, args.epochs, device, ckpt_path, args)
 
     save_model(model, args.checkpoint_dir+f"patchguard_{args.dataset}_{args.class_name}_pgd{args.step_train}_last_epoch.pth")
+
+    # ─── Finish wandb ───
+    wandb.finish()
