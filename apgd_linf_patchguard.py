@@ -3,7 +3,6 @@ apgd_linf_patchguard.py
 
 APGD L∞ attack adapted for PatchGuard anomaly detection.
 Uses PatchGuard's score-based loss instead of CE/DLR classification loss.
-L∞ norm: every pixel changes by at most ±ε.
 """
 
 import math

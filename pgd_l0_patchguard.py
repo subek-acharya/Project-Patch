@@ -3,7 +3,6 @@ pgd_l0_patchguard.py
 
 PGD L0 attack adapted for PatchGuard anomaly detection.
 Uses PatchGuard's score-based loss instead of DLR/CE classification loss.
-L0 norm: at most k pixels change, each by up to 1.0 (sparse, large changes).
 """
 
 import math

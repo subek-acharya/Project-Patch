@@ -3,7 +3,6 @@ apgd_l1_patchguard.py
 
 APGD L1 attack adapted for PatchGuard anomaly detection.
 Uses PatchGuard's score-based loss instead of DLR/CE classification loss.
-L1 norm: sparse perturbation (few pixels change a lot).
 """
 
 import time
