@@ -33,7 +33,8 @@ datasets/MVTec/toothbrush/train/
 bash train_all_mvtec.sh
 ```
 
-####
+#### Train Individual Category
+
 ```code
 # Clean model
 python main.py --mode train --class_name bottle --dataset mvtec --dataset_dir ./datasets/mvtec --checkpoint_dir ./checkpoints_clean/ --epochs 1000 --top_k 5 --no_adv_train
